@@ -1,0 +1,41 @@
+
+function main() {
+  
+  //adjust the start and end date below for the date range of your search query data
+  //for now, you also need to update the list of customer IDs the report will pull for 
+  //I will try to figure out how to have this run across all accounts in the MCC
+  //I also want to edit this to send the info to a Google Sheets URL rather than only appearing as comma separated list in the Logs here in Google Ads Scripts area
+  //also need to add a filter like Ignore if Campaign contains a word, like filtering out Seller if we only want Buyer campaign search queries
+var startDate = "2020-06-01";
+var endDate = "2020-06-10";
+// The start and end date of the date range for your search query data
+// Format is yyyy-mm-dd
+  
+var dateRange = startDate.replace(/-/g, "") + "," + endDate.replace(/-/g, "");
+  
+  var mccAccount = AdsApp.currentAccount();                     
+  var accountIterator = AdsManagerApp.accounts().withIds(['123-456-7890', '234-567-8901']
+).get();
+  while (accountIterator.hasNext()) {                           
+    var account = accountIterator.next();
+    AdsManagerApp.select(account);
+    var search_queries = [];
+   // var whereStatement = "WHERE QueryTargetingStatus = NONE";
+    
+    var queries = AdsApp.report(
+      "SELECT Query,AccountDescriptiveName,AdGroupName,Conversions,ConversionRate,AverageCpc,CostPerConversion,Cost,QueryMatchTypeWithVariant,QueryTargetingStatus "+
+      "FROM SEARCH_QUERY_PERFORMANCE_REPORT "+
+      "WHERE QueryTargetingStatus = NONE "+
+      "DURING " + dateRange 
+      // +whereStatement
+    );
+    var rows = queries.rows();
+    while (rows.hasNext()) {
+      var row = rows.next();
+      search_queries.push([row['Query'],row['AccountDescriptiveName'],row['AdGroupName'],row['Conversions'],row['ConversionRate'],row['AverageCpc'],row['CostPerConversion'],row['Cost'],row['QueryMatchTypeWithVariant'],row['QueryTargetingStatus']]);
+    }
+    search_queries.forEach(function (val){
+      Logger.log(val);
+    });
+  }
+}
